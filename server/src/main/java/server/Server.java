@@ -48,9 +48,13 @@ public class Server {
     public void privateMsg(ClientHandler sender, String userName, String msg){
         String message = String.format("Private [ %s ]: %s", sender.getNickname(), msg);
         for (ClientHandler c : clients) {
-            System.out.println(c.getNickname() + ":" + userName);
-            if(c.getNickname().equals(userName) || c.getNickname().equals(sender.getNickname())){
+            if(c.getNickname().equals(userName)){
                 c.sendMsg(message);
+                if(c != sender){
+                    sender.sendMsg(message);
+                }
+
+                return;
             }
         }
     }
