@@ -45,6 +45,16 @@ public class Server {
         }
     }
 
+    public void privateMsg(ClientHandler sender, String userName, String msg){
+        String message = String.format("Private [ %s ]: %s", sender.getNickname(), msg);
+        for (ClientHandler c : clients) {
+            System.out.println(c.getNickname() + ":" + userName);
+            if(c.getNickname().equals(userName) || c.getNickname().equals(sender.getNickname())){
+                c.sendMsg(message);
+            }
+        }
+    }
+
     void subscribe(ClientHandler clientHandler){
         clients.add(clientHandler);
     }
