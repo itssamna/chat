@@ -59,7 +59,15 @@ public class ClientHandler {
                             break;
                         }
 
-                        server.broadcastMsg(this, str);
+                        if (str.startsWith(Command.PRIVATE)) {
+                            String[] stringParts = str.split(" ", 3);
+                            String userName = stringParts[1].trim();
+                            String msg = stringParts[2].trim();
+
+                            server.privateMsg(this, userName, msg);
+                        } else {
+                            server.broadcastMsg(this, str);
+                        }
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
