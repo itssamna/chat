@@ -88,6 +88,25 @@ public class ClientHandler {
                                 server.privateMsg(this, token[1], token[2]);
                             }
 
+                            if(str.startsWith(Command.NICK_UPDATE_REQ)){
+                                String[] token = str.split("\\s");
+                                Boolean result = false;
+
+                                if(token.length > 1){
+                                    result = server.getAuthService().updateNickname(this.nickname, token[1]);
+                                } else {
+                                    sendMsg("Nickname is not provided");
+                                }
+
+                                if(result){
+                                    nickname = token[1];
+                                    server.initUserListUpdate();
+                                    sendMsg(Command.NICK_UPDATE_SUCCESS);
+                                } else {
+                                    sendMsg(Command.NICK_UPDATE_FAIL);
+                                }
+                            }
+
                         } else {
                             server.broadcastMsg(this, str);
                         }

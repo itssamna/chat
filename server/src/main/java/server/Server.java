@@ -5,6 +5,7 @@ import commands.Command;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -14,14 +15,25 @@ public class Server {
     private final int PORT = 8189;
     private List<ClientHandler> clients;
     private AuthService authService;
+    private AuthService dbAuthService;
 
     public Server() {
         clients = new CopyOnWriteArrayList<>();
         authService = new SimpleAuthService();
+        dbAuthService = new DBAuthService();
 
         try {
             server = new ServerSocket(PORT);
             System.out.println("Server started");
+
+            try {
+                DB.connect();
+                System.out.println("DB connected");
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+                System.out.println("Can't connect to the DB");
+                server.close();
+            }
 
             while (true) {
                 socket = server.accept();
@@ -32,6 +44,7 @@ public class Server {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
+            DB.disconnect();
             try {
                 server.close();
             } catch (IOException e) {
@@ -61,6 +74,10 @@ public class Server {
         sender.sendMsg(String.format("User %s not found", receiver));
     }
 
+    public void initUserListUpdate() {
+        broadcastClientList();
+    }
+
     void subscribe(ClientHandler clientHandler) {
         clients.add(clientHandler);
         broadcastClientList();
@@ -72,7 +89,7 @@ public class Server {
     }
 
     public AuthService getAuthService() {
-        return authService;
+        return dbAuthService;
     }
 
     public boolean isLoginAuthenticated(String login) {
