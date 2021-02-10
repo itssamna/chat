@@ -1,6 +1,9 @@
 package client;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
 
 public class MessageHistory {
     private String login;
@@ -31,6 +34,17 @@ public class MessageHistory {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public List<String> getMessageHistory(){
+        List<String> messages = null;
+        try {
+            messages = Files.readAllLines(Paths.get("history/history_" + login + ".txt"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return messages;
     }
 
     public void close(){
