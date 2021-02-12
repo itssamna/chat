@@ -10,4 +10,7 @@ public class Command {
     public static final String REG_OK = "/regok";
     public static final String REG_NO = "/regno";
 
+    public static final String NICK_UPDATE_REQ = "/setnick";
+    public static final String NICK_UPDATE_SUCCESS = "/setnicksuccess";
+    public static final String NICK_UPDATE_FAIL = "/setnickfail";
 }

@@ -121,6 +121,7 @@ public class Controller implements Initializable {
                             if (str.equals(Command.REG_NO)) {
                                 regController.regNo();
                             }
+
                         } else {
                             textArea.appendText(str + "\n");
                         }
@@ -143,6 +144,14 @@ public class Controller implements Initializable {
                                         clientList.getItems().add(tokens[i]);
                                     }
                                 });
+                            }
+
+                            if(str.equals(Command.NICK_UPDATE_SUCCESS)){
+                                nickUpdateSuccess();
+                            }
+
+                            if(str.equals(Command.NICK_UPDATE_FAIL)){
+                                nickUpdateFail();
                             }
 
                         } else {
@@ -247,5 +256,10 @@ public class Controller implements Initializable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void nickUpdateSuccess(){textArea.appendText("Никнейм обвновлен\n"); }
+    public void nickUpdateFail(){
+        textArea.appendText("Никнейм уже заняты\n");
     }
 }
