@@ -18,13 +18,13 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.stage.WindowEvent;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class Controller implements Initializable {
@@ -55,6 +55,7 @@ public class Controller implements Initializable {
     private Stage stage;
     private Stage regStage;
     private RegController regController;
+    private MessageHistory history;
 
     public void setAuthenticated(boolean authenticated) {
         this.authenticated = authenticated;
@@ -105,7 +106,9 @@ public class Controller implements Initializable {
                         if (str.startsWith("/")) {
                             if (str.startsWith(Command.AUTH_OK)) {
                                 nickname = str.split("\\s")[1];
+                                history = new MessageHistory(nickname);
                                 setAuthenticated(true);
+                                printOldMessages(history.getMessageHistory());
                                 break;
                             }
 
@@ -156,6 +159,7 @@ public class Controller implements Initializable {
 
                         } else {
                             textArea.appendText(str + "\n");
+                            history.logMessage(str + "\n");
                         }
                     }
                 } catch (RuntimeException e) {
@@ -164,6 +168,7 @@ public class Controller implements Initializable {
                     e.printStackTrace();
                 } finally {
                     setAuthenticated(false);
+                    history.close();
                     try {
                         socket.close();
                     } catch (IOException e) {
@@ -174,6 +179,12 @@ public class Controller implements Initializable {
 
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void printOldMessages(List<String> messageHistory) {
+        for(String message: messageHistory){
+            textArea.appendText(message + "\n");
         }
     }
 
