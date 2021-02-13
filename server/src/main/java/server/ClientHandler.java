@@ -23,110 +23,6 @@ public class ClientHandler {
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
 
-            new Thread(() -> {
-                try {
-                    socket.setSoTimeout(120000);
-                    //цикл аутентификации
-                    while (true) {
-                        String str = in.readUTF();
-
-                        if (str.startsWith(Command.AUTH)) {
-                            String[] token = str.split("\\s");
-                            String newNick = server.getAuthService()
-                                    .getNicknameByLoginAndPassword(token[1], token[2]);
-                            login = token[1];
-                            if (newNick != null) {
-                                if (!server.isLoginAuthenticated(login)) {
-                                    nickname = newNick;
-                                    sendMsg(Command.AUTH_OK + " " + nickname);
-                                    server.subscribe(this);
-                                    System.out.println("client " + nickname + " connected " + socket.getRemoteSocketAddress());
-                                    socket.setSoTimeout(0);
-                                    break;
-                                } else {
-                                    sendMsg("С этим логином уже авторизовались");
-                                }
-                            } else {
-                                sendMsg("Неверный логин / пароль");
-                            }
-                        }
-
-                        if (str.equals(Command.END)) {
-                            sendMsg(Command.END);
-                            throw new RuntimeException("client disconnected");
-                        }
-
-                        if (str.startsWith(Command.REG)) {
-                            String[] token = str.split("\\s");
-                            if (token.length < 4) {
-                                continue;
-                            }
-                            boolean isRegistered = server.getAuthService().registration(token[1], token[2], token[3]);
-                            if (isRegistered) {
-                                sendMsg(Command.REG_OK);
-                            } else {
-                                sendMsg(Command.REG_NO);
-                            }
-                        }
-                    }
-
-                    //цикл работы
-                    while (true) {
-                        String str = in.readUTF();
-
-                        if (str.startsWith("/")) {
-                            if (str.equals(Command.END)) {
-                                sendMsg(Command.END);
-                                System.out.println("client disconnected");
-                                break;
-                            }
-                            if (str.startsWith(Command.PRV_MSG)) {
-                                String[] token = str.split("\\s", 3);
-                                if (token.length < 3) {
-                                    continue;
-                                }
-                                server.privateMsg(this, token[1], token[2]);
-                            }
-
-                            if(str.startsWith(Command.NICK_UPDATE_REQ)){
-                                String[] token = str.split("\\s");
-                                Boolean result = false;
-
-                                if(token.length > 1){
-                                    result = server.getAuthService().updateNickname(this.nickname, token[1]);
-                                } else {
-                                    sendMsg("Nickname is not provided");
-                                }
-
-                                if(result){
-                                    nickname = token[1];
-                                    server.initUserListUpdate();
-                                    sendMsg(Command.NICK_UPDATE_SUCCESS);
-                                } else {
-                                    sendMsg(Command.NICK_UPDATE_FAIL);
-                                }
-                            }
-
-                        } else {
-                            server.broadcastMsg(this, str);
-                        }
-                    }
-                } catch (SocketTimeoutException e) {
-                    sendMsg(Command.END);
-                    System.out.println(e.getMessage());
-                } catch (RuntimeException e) {
-                    System.out.println(e.getMessage());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    server.unsubscribe(this);
-                    try {
-                        socket.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }).start();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -138,6 +34,111 @@ public class ClientHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void start (){
+            try {
+                socket.setSoTimeout(120000);
+                //цикл аутентификации
+                while (true) {
+                    String str = in.readUTF();
+
+                    if (str.startsWith(Command.AUTH)) {
+                        String[] token = str.split("\\s");
+                        String newNick = server.getAuthService()
+                                .getNicknameByLoginAndPassword(token[1], token[2]);
+                        login = token[1];
+                        if (newNick != null) {
+                            if (!server.isLoginAuthenticated(login)) {
+                                nickname = newNick;
+                                sendMsg(Command.AUTH_OK + " " + nickname);
+                                server.subscribe(this);
+                                System.out.println("client " + nickname + " connected " + socket.getRemoteSocketAddress());
+                                socket.setSoTimeout(0);
+                                break;
+                            } else {
+                                sendMsg("С этим логином уже авторизовались");
+                            }
+                        } else {
+                            sendMsg("Неверный логин / пароль");
+                        }
+                    }
+
+                    if (str.equals(Command.END)) {
+                        sendMsg(Command.END);
+                        throw new RuntimeException("client disconnected");
+                    }
+
+                    if (str.startsWith(Command.REG)) {
+                        String[] token = str.split("\\s");
+                        if (token.length < 4) {
+                            continue;
+                        }
+                        boolean isRegistered = server.getAuthService().registration(token[1], token[2], token[3]);
+                        if (isRegistered) {
+                            sendMsg(Command.REG_OK);
+                        } else {
+                            sendMsg(Command.REG_NO);
+                        }
+                    }
+                }
+
+                //цикл работы
+                while (true) {
+                    String str = in.readUTF();
+
+                    if (str.startsWith("/")) {
+                        if (str.equals(Command.END)) {
+                            sendMsg(Command.END);
+                            System.out.println("client disconnected");
+                            break;
+                        }
+                        if (str.startsWith(Command.PRV_MSG)) {
+                            String[] token = str.split("\\s", 3);
+                            if (token.length < 3) {
+                                continue;
+                            }
+                            server.privateMsg(this, token[1], token[2]);
+                        }
+
+                        if(str.startsWith(Command.NICK_UPDATE_REQ)){
+                            String[] token = str.split("\\s");
+                            Boolean result = false;
+
+                            if(token.length > 1){
+                                result = server.getAuthService().updateNickname(this.nickname, token[1]);
+                            } else {
+                                sendMsg("Nickname is not provided");
+                            }
+
+                            if(result){
+                                nickname = token[1];
+                                server.initUserListUpdate();
+                                sendMsg(Command.NICK_UPDATE_SUCCESS);
+                            } else {
+                                sendMsg(Command.NICK_UPDATE_FAIL);
+                            }
+                        }
+
+                    } else {
+                        server.broadcastMsg(this, str);
+                    }
+                }
+            } catch (SocketTimeoutException e) {
+                sendMsg(Command.END);
+                System.out.println(e.getMessage());
+            } catch (RuntimeException e) {
+                System.out.println(e.getMessage());
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                server.unsubscribe(this);
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
     }
 
     public String getNickname() {

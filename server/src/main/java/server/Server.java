@@ -8,6 +8,8 @@ import java.net.Socket;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Server {
     private ServerSocket server;
@@ -16,11 +18,13 @@ public class Server {
     private List<ClientHandler> clients;
     private AuthService authService;
     private AuthService dbAuthService;
+    private ExecutorService executorService;
 
     public Server() {
         clients = new CopyOnWriteArrayList<>();
         authService = new SimpleAuthService();
         dbAuthService = new DBAuthService();
+        executorService = Executors.newCachedThreadPool();
 
         try {
             server = new ServerSocket(PORT);
@@ -38,16 +42,19 @@ public class Server {
             while (true) {
                 socket = server.accept();
                 System.out.println("Client connected");
-                new ClientHandler(this, socket);
+                ClientHandler client = new ClientHandler(this, socket);
+                executorService.execute(new Thread(() -> client.start()));
             }
 
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
             DB.disconnect();
+
             try {
+                executorService.shutdown();
                 server.close();
-            } catch (IOException e) {
+                  } catch (IOException e) {
                 e.printStackTrace();
             }
         }
